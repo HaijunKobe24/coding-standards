@@ -140,6 +140,7 @@ public class BookService {
 ### 2.4 Import 规则
 
 - **不使用通配符导入**，逐条显式 import
+- **不在逻辑代码中写类的完全限定路径**，必须提前 import
 - 分组顺序（组间空行分隔）：
   1. `java.*`
   2. `javax.*`
@@ -440,7 +441,11 @@ public class CourseGrpcService extends CourseServiceGrpc.CourseServiceImplBase {
 }
 ```
 
-### 6.3 远程调用（Template 模式）
+### 6.3 了解 gRPC 接口
+
+当需要了解依赖包中定义的 gRPC 接口时，使用该依赖服务的**服务端反射（Server Reflection）**接口进行查询，而非阅读源码或 Proto 文件。
+
+### 6.4 远程调用（Template 模式）
 
 - 使用 WebClient 进行 HTTP 调用
 - 请求/响应均记录日志
@@ -462,7 +467,11 @@ public BookStructDTO getBookStruct(String bookId, AccessTokenRequest tokenReques
 }
 ```
 
-### 6.4 消息消费者
+### 6.5 了解 HTTP 接口
+
+当需要了解依赖服务的 HTTP 接口时，使用其 **Swagger 文档**（通过 `curl` 获取）。服务地址从配置文件中读取，Swagger 版本可能为 v2 或 v3。
+
+### 6.6 消息消费者
 
 - `@KafkaListener` 配置从 YAML 中引用（SpEL 表达式），非必须
 - 消息体使用 Hutool `JSONUtil.toBean()` 反序列化，非必须
@@ -483,7 +492,7 @@ public void consume(String message) {
 }
 ```
 
-### 6.5 对象转换
+### 6.7 对象转换
 
 - Converter 类使用静态方法
 - 方法名以 `toDTO()` / `toProto()` 表示转换方向，方法名称中可包含功能定义
@@ -515,7 +524,7 @@ public class ModelConverter {
 }
 ```
 
-### 6.6 返回值风格
+### 6.8 返回值风格
 
 - **Early Return**：条件分支尽早返回，减少嵌套
 - **Optional 链式处理**：配合 `orElseThrow` / `orElse` 使用
@@ -533,7 +542,7 @@ String nodeId = bookRepository.findById(bookId)
         .orElseThrow(() -> new ValidateException(PARAM_ERROR.getCode(), PARAM_ERROR.getMsg()));
 ```
 
-### 6.7 Stream 与函数式
+### 6.9 Stream 与函数式
 
 - 链式调用，按照代码格式化规则
 - 终止操作（`collect`, `forEach`），按照代码格式化规则
