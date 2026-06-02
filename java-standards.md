@@ -864,18 +864,18 @@ public class IPublishRemoteProperties {
 ## 附录：编码风格速查表
 
 ```
-类注解顺序        Lombok → Spring → JPA → gRPC
-依赖注入          @Resource（不用 @Autowired）
-Javadoc           所有方法必写，@author + @date（yyyy/M/d）
-日志              @Slf4j + 占位符，业务中文/框架英文
-异常处理          自定义 RuntimeException + 错误码枚举
-Service 设计      无接口，直接 @Service 类
-返回值            Early Return，Optional 链式
-集合              Guava Lists/Maps，Stream API
-字符串格式化      String.format()
-常量              interface 定义，嵌套分组
-配置              @ConfigurationProperties 绑定
-远程调用          Template 模式 + WebClient + Guava Cache
+类（方法、字段）注解顺序        Swagger → Lombok → JPA/gRPC/Spring/SpringMVC，原则：与功能越无关的注解越往前放
+依赖注入                     @Resource（不用 @Autowired）
+Javadoc                     所有方法必写，@author + @date（yyyy/M/d）
+日志                         @Slf4j + 占位符，业务中文/框架英文
+异常处理          					 自定义 RuntimeException + 错误码枚举
+Service 设计      				   无接口，直接 @Service 类
+返回值            					  Early Return，Optional 链式
+集合              				  Guava Lists/Maps，Stream API
+字符串格式化      					  String.format()
+常量              				  interface 定义，嵌套分组
+配置              				  @ConfigurationProperties 绑定
+远程调用          				   Template 模式 + WebClient + Guava Cache
 ```
 
 ---
