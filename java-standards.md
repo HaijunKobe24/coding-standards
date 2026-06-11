@@ -719,6 +719,25 @@ log.info("accessToken response：{}", response);
 - JPA 实体字段依赖隐式列映射，不加多余的 `@Column`
 - 非Controller入参DTO，字段不加多余的校验注解（在 Proto 层或拦截器层统一校验）
 
+### 9.5 禁止魔法值
+
+- 不在逻辑代码中直接使用未经定义的字面量（魔法值）
+- 字符串、数字等常量必须在项目约定的常量包中定义为枚举类或常量接口
+- 若值具有状态语义，使用枚举类；若为简单配置值或标识，使用常量接口
+
+```java
+// ✗ 错误：逻辑中直接写魔法值
+if (Objects.equals(type, "question-block")) { ... }
+
+// ✓ 正确：使用常量引用
+if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
+```
+
+### 9.6 工具方法提取
+
+- 通用、可复用的工具方法不允许写在业务类中，必须提取到对应的 `Utils` 工具类
+- 工具类统一放在项目约定的工具包下
+
 ---
 
 ## 10. 复用设计
