@@ -559,6 +559,9 @@ Map<Boolean, List<BookUnit>> unitsByPub = units.stream()
 
 ## 7. 异常处理
 
+- 业务层不进行 `try-catch`，异常统一交给框架层（拦截器/全局异常处理器）处理
+- 业务层只负责抛出语义明确的自定义异常
+
 ### 7.1 自定义异常
 
 - 继承 `RuntimeException`
