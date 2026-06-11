@@ -126,7 +126,6 @@ public class BookService {
 
 ### 2.4 Import 规则
 
-- **不使用通配符导入**，逐条显式 import
 - **不在逻辑代码中写类的完全限定路径**，必须提前 import
 
 ---
