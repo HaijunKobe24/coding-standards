@@ -323,14 +323,15 @@ private String refId;
 
 ### 5.1 类级注解顺序
 
-自上而下：
+原则：与功能越无关的注解越往前放。自上而下：
 
-1. **Lombok 注解**：`@Data`, `@Slf4j`, `@Getter`, `@AllArgsConstructor`, `@NoArgsConstructor`
-2. **排序/作用域注解**：`@Order`
-3. **Spring 组件注解**：`@Service`, `@Component`, `@Configuration`, `@RestController`
-4. **Spring 配置注解**：`@ConditionalOnProperty`, `@EnableConfigurationProperties`
-5. **JPA 注解**：`@Entity`, `@Table`
-6. **gRPC 注解**：`@GRpcService`, `@GRpcGlobalInterceptor`
+1. **Swagger 注解**：`@Api`, `@Tag`
+2. **Lombok 注解**：`@Data`, `@Slf4j`, `@Getter`, `@AllArgsConstructor`, `@NoArgsConstructor`
+3. **排序/作用域注解**：`@Order`
+4. **Spring 组件注解**：`@Service`, `@Component`, `@Configuration`, `@RestController`
+5. **Spring 配置注解**：`@ConditionalOnProperty`, `@EnableConfigurationProperties`
+6. **JPA 注解**：`@Entity`, `@Table`
+7. **gRPC 注解**：`@GRpcService`, `@GRpcGlobalInterceptor`
 
 ```java
 @Slf4j
@@ -347,6 +348,13 @@ public class GrpcLogInterceptor implements ServerInterceptor {
 @Table(name = "tab_book")
 public class Book {
 ```
+
+方法级注解顺序同理：
+
+1. **Swagger 注解**：`@ApiOperation`, `@Operation`
+2. **Spring MVC 注解**：`@GetMapping`, `@PostMapping`, `@RequestMapping`
+3. **事务/修改注解**：`@Transactional`, `@Modifying`
+4. **其他注解**：`@Query`, `@Override`
 
 ### 5.2 依赖注入
 
