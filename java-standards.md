@@ -114,24 +114,11 @@ public class BookService {
 
     @Resource
     private BookRepository bookRepository;
-  
-    @Resource
-    private BookUnitRepository bookUnitRepository;
-  
+
     @Resource
     private IPublishTemplate iPublishTemplate;
 
-    /**
-     * 获取课程教材节点
-     */
     public List<UnitStructDTO> courseBookNodes(String bookId) {
-        // ...
-    }
-
-    /**
-     * 获取自定义教材节点
-     */
-    private List<CustomContentSimpleDTO> getCustomNodes(Book book) {
         // ...
     }
 }
@@ -321,9 +308,9 @@ private String refId;
 原则：与功能越无关的注解越往前放。自上而下：
 
 1. **Swagger 注解**：`@Api`, `@Tag`
-2. **Lombok 注解**：`@Data`, `@Slf4j`, `@Getter`, `@AllArgsConstructor`, `@NoArgsConstructor`
-3. **排序/作用域注解**：`@Order`
-4. **Spring 组件注解**：`@Service`, `@Component`, `@Configuration`, `@RestController`
+2. **Lombok 注解**：`@Slf4j`,`@Data`, `@Getter`, `@AllArgsConstructor`, `@NoArgsConstructor`
+3. **自定义注解**：项目自定义的业务注解，如 `@AuditLog`, `@RateLimit`, `@RequirePermission` 等
+4. **Spring 组件注解**：`@Service`, `@Component`, `@Configuration`, `@RestController`, `@Order`
 5. **Spring 配置注解**：`@ConditionalOnProperty`, `@EnableConfigurationProperties`
 6. **JPA 注解**：`@Entity`, `@Table`
 7. **gRPC 注解**：`@GRpcService`, `@GRpcGlobalInterceptor`
@@ -344,42 +331,16 @@ public class GrpcLogInterceptor implements ServerInterceptor {
 public class Book {
 ```
 
-方法级注解顺序同理：
-
-1. **Swagger 注解**：`@ApiOperation`, `@Operation`
-2. **Spring MVC 注解**：`@GetMapping`, `@PostMapping`, `@RequestMapping`
-3. **事务/修改注解**：`@Transactional`, `@Modifying`
-4. **其他注解**：`@Query`, `@Override`
+方法级注解顺序同理，常见方法级注解归类：Swagger（`@Operation`）、自定义注解（`@AuditLog`）、Spring MVC（`@GetMapping`）、事务（`@Transactional`, `@Modifying`）、JPA（`@Query`）、`@Override`。
 
 ### 5.2 依赖注入
 
-**统一使用 `@Resource`**，不使用 `@Autowired`：
-
-```java
-@Resource
-private BookRepository bookRepository;
-
-@Resource
-private IPublishTemplate iPublishTemplate;
-```
-
-- 注入字段之间有空行
-- `@Resource` 独占一行，紧跟字段声明
+**统一使用 `@Resource`**，不使用 `@Autowired`。注入字段之间有空行，`@Resource` 独占一行紧跟字段声明（见 2.3 示例）。
 
 ### 5.3 JPA 注解
 
-```java
-@Entity
-@Table(name = "tab_book_unit")
-public class BookUnit {
-
-    @Id
-    private String id;
-
-    // 普通字段无需 @Column（依赖隐式映射）
-    private String bookId;
-}
-```
+- 实体类必须 `@Id` 标注主键
+- 普通字段依赖隐式列映射，不加多余的 `@Column`
 
 ### 5.4 Repository 查询注解
 
@@ -408,14 +369,6 @@ public CopyCourseDataDTO copyBook(String bookId, String openId) {
     }
     return this.copyOfficialBook(bookId, openId);
 }
-
-private CopyCourseDataDTO copyOfficialBook(String bookId, String openId) {
-    // 具体实现
-}
-
-private CopyCourseDataDTO copyCustomBook(String bookId, String openId) {
-    // 具体实现
-}
 ```
 
 ### 6.2 gRPC 服务实现
@@ -424,78 +377,20 @@ private CopyCourseDataDTO copyCustomBook(String bookId, String openId) {
 - 业务委托给 Service 层，gRPC 层只做协议转换
 - 使用 Convert 类构建响应
 
-```java
-@Slf4j
-@GRpcService
-public class CourseGrpcService extends CourseServiceGrpc.CourseServiceImplBase {
-
-    @Resource
-    private IPublishBookService iPublishBookService;
-
-    @Override
-    public void createUnit(CreateUnitRequestPO request,
-            StreamObserver<CreateUnitResponsePO> responseObserver) {
-        String nodeId = iPublishBookService.addBookNode(request.getBookId(), request.getName());
-        CreateUnitResponsePO response = CourseProtoObjectConvert.buildCreateUnitResponse(
-                request.getBookId(), nodeId);
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-}
-```
-
-### 6.3 了解 gRPC 接口
-
-当需要了解依赖包中定义的 gRPC 接口时，使用该依赖服务的**服务端反射（Server Reflection）**接口进行查询，而非阅读源码或 Proto 文件。
-
-### 6.4 远程调用（Template 模式）
+### 6.3 远程调用（Template 模式）
 
 - 使用 WebClient 进行 HTTP 调用
 - 请求/响应均记录日志
 - 统一调用 `ExceptionUtils.checkAndThrow()` 校验响应
 - Token 等信息通过 Guava Cache 缓存
 
-```java
-public BookStructDTO getBookStruct(String bookId, AccessTokenRequest tokenRequest) {
-    log.info("getBookStruct request bookId: {}", bookId);
-    IPublishResponse<BookStructDTO> response = webClient.get()
-            .uri(properties.getUri().getGetBookStructUri(bookId))
-            .header(properties.getTokenHeader(), this.loadAccessToken(tokenRequest))
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<IPublishResponse<BookStructDTO>>() {
-            }).block();
-    log.info("getBookStruct response: {}", response);
-    ExceptionUtils.checkAndThrow(response, true);
-    return Objects.requireNonNull(response).getData();
-}
-```
-
-### 6.5 了解 HTTP 接口
-
-当需要了解依赖服务的 HTTP 接口时，使用其 **Swagger 文档**（通过 `curl` 获取）。服务地址从配置文件中读取，Swagger 版本可能为 v2 或 v3。
-
-### 6.6 消息消费者
+### 6.4 消息消费者
 
 - `@KafkaListener` 配置从 YAML 中引用（SpEL 表达式），非必须
 - 消息体使用 Hutool `JSONUtil.toBean()` 反序列化，非必须
 - 异常情况记录日志后 return，不中断消费，非必须
 
-```java
-@KafkaListener(topics = "#{unitUpdate.topic}", groupId = "#{unitUpdate.group}",
-        concurrency = "#{unitUpdate.concurrency}",
-        properties = "max.poll.records=#{unitUpdate.maxRecords}")
-public void consume(String message) {
-    log.info("msg: {}", message);
-    IPublishContentMsg msg = JSONUtil.toBean(message, IPublishContentMsg.class);
-    if (Objects.equals(msg.getStatus(), ContentStatusEnum.PUBLISHED.getStatus().intValue())) {
-        log.info("msg is publish unit: {}", msg.getBizId());
-        return;
-    }
-    // 继续处理...
-}
-```
-
-### 6.7 对象转换
+### 6.5 对象转换
 
 - Converter 类使用静态方法
 - 方法名以 `toDTO()` / `toProto()` 表示转换方向，方法名称中可包含功能定义
@@ -503,59 +398,26 @@ public void consume(String message) {
 - Protobuf 对象使用 Builder 模式构建
 
 ```java
-public class ModelConverter {
-
-    public static StatusDTO toDTO(Status proto) {
-        if (proto == null) {
-            return null;
-        }
-        StatusDTO dto = new StatusDTO();
-        dto.setCode(proto.getCode());
-        dto.setMsg(proto.getMsg());
-        return dto;
+public static CreateUnitRequestPO toProto(CreateUnitRequestDTO dto) {
+    if (dto == null) {
+        return null;
     }
-
-    public static CreateUnitRequestPO toProto(CreateUnitRequestDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        return CreateUnitRequestPO.newBuilder()
-                .setBookId(dto.getBookId())
-                .setName(dto.getName())
-                .build();
-    }
+    return CreateUnitRequestPO.newBuilder()
+            .setBookId(dto.getBookId())
+            .setName(dto.getName())
+            .build();
 }
 ```
 
-### 6.8 返回值风格
+### 6.6 返回值风格
 
-- **Early Return**：条件分支尽早返回，减少嵌套
+- **Early Return**：条件分支尽早返回，减少嵌套（见 6.1 示例）
 - **Optional 链式处理**：配合 `orElseThrow` / `orElse` 使用
 
 ```java
-// Early Return
-if (BookUtils.isCustomBookId(bookId)) {
-    return this.copyCustomBook(bookId, openId);
-}
-return this.copyOfficialBook(bookId, openId);
-
-// Optional 链式
 String nodeId = bookRepository.findById(bookId)
         .map(b -> iPublishNodeService.addBookNode(b.getId(), nodeName, b.getCreator()))
         .orElseThrow(() -> new ValidateException(PARAM_ERROR.getCode(), PARAM_ERROR.getMsg()));
-```
-
-### 6.9 Stream 与函数式
-
-- 链式调用，按照代码格式化规则
-- 终止操作（`collect`, `forEach`），按照代码格式化规则
-
-```java
-List<String> unitIds = units.stream().map(BookUnit::getId).collect(Collectors.toList());
-
-Map<Boolean, List<BookUnit>> unitsByPub = units.stream()
-.collect(Collectors.groupingBy(
-                unit -> Objects.equals(unit.getStatus(), PUBLISHED.getStatus())));
 ```
 
 ---
@@ -591,24 +453,10 @@ public class HttpException extends RuntimeException {
 
 ### 7.2 异常工具类
 
-统一校验远程调用响应，失败则抛出异常：
-
-```java
-public static void checkAndThrow(HttpResponse<?> response, boolean validData) {
-    if (response == null) {
-        log.error("HttpResponse is null");
-        throw new HttpException(CodeEnum.REMOTE_SERVER_ERROR);
-    }
-    if (!response.isSuccess()) {
-        log.error("HttpResponse is not success, response: {}", response);
-        throw new HttpException(response);
-    }
-    if (validData && response.getData() == null) {
-        log.error("HttpResponse data is null, response: {}", response);
-        throw new HttpException(CodeEnum.REMOTE_SERVER_ERROR);
-    }
-}
-```
+统一校验远程调用响应，失败则抛出异常（`ExceptionUtils.checkAndThrow()`）：
+- null 响应 → 抛出 `REMOTE_SERVER_ERROR`
+- 非 success → 抛出携带响应信息的异常
+- data 为 null（需校验时）→ 抛出 `REMOTE_SERVER_ERROR`
 
 ### 7.3 gRPC 异常拦截器
 
@@ -616,29 +464,9 @@ public static void checkAndThrow(HttpResponse<?> response, boolean validData) {
 - 将业务异常转为 gRPC `Status` 返回
 - 未知异常返回 `INTERNAL` 状态
 
-```java
-private static final Map<Class<? extends Exception>, Function<Exception, Pair<Integer, String>>>
-        EXP_MAP = Maps.newLinkedHashMap();
-
-static {
-    EXP_MAP.put(MethodArgumentNotValidException.class, PARAM_ERR_GETTER);
-    EXP_MAP.put(BindException.class, PARAM_ERR_GETTER);
-    EXP_MAP.put(ConstraintViolationException.class, PARAM_ERR_GETTER);
-    EXP_MAP.put(StatefulException.class, e -> {
-        StatefulException exp = (StatefulException) e;
-        return Pair.of(exp.getStatus(), exp.getMessage());
-    });
-}
-```
-
 ### 7.4 业务层异常
 
-使用 `ValidateException` 包装参数校验错误，配合 `CodeEnum` 使用：
-
-```java
-bookRepository.findById(id).orElseThrow(
-        () -> new ValidateException(PARAM_ERROR.getCode(), PARAM_ERROR.getMsg()));
-```
+使用 `ValidateException` 包装参数校验错误，配合 `CodeEnum` 使用（见 6.6 Optional 链式示例）。
 
 ---
 
@@ -646,15 +474,7 @@ bookRepository.findById(id).orElseThrow(
 
 ### 8.1 Logger 获取
 
-统一使用 Lombok `@Slf4j` 注解，不手动声明 Logger：
-
-```java
-@Slf4j
-@Service
-public class IPublishBookService {
-    // 直接使用 log.info(...)
-}
-```
+统一使用 Lombok `@Slf4j` 注解，不手动声明 Logger。
 
 ### 8.2 日志级别
 
@@ -671,27 +491,9 @@ public class IPublishBookService {
 - 业务日志使用中文描述
 - 拦截器/框架日志使用英文 + `LOG_PREFIX` 前缀
 
-```java
-// 业务日志（中文）
-log.info("开始复制教材，openId: {}, bookId: {}", openId, bookId);
-log.info("新增教材节点：bookId：{}，nodeId：{}", bookId, nodeId);
-log.error("官方教材不存在：{}", bookId);
-
-// 框架日志（英文 + 前缀）
-private static final String LOG_PREFIX = "[gRPC]";
-log.info("{} [{}] Request started", LOG_PREFIX, methodName);
-log.info("{} [{}] Request completed in {}ms", LOG_PREFIX, methodName, duration);
-log.error("{} [{}] Request failed: {}", LOG_PREFIX, methodName, e.getMessage(), e);
-```
-
 ### 8.4 远程调用日志
 
-请求和响应成对记录：
-
-```java
-log.info("accessToken request：{}", request);
-log.info("accessToken response：{}", response);
-```
+请求和响应成对记录：`log.info("xxx request：{}", request)` / `log.info("xxx response：{}", response)`
 
 ---
 
@@ -708,24 +510,13 @@ log.info("accessToken response：{}", response);
 | `@Getter` | 仅需 getter 的场景（如枚举） |
 | `@Data(staticConstructor = "of")` | 静态工厂方法 |
 
-### 9.2 Service 无接口
-
-- 不创建无意义的 `Interface` + `Impl` 分离
-- 直接用 `@Service` 类承载业务逻辑
-- 只在确实需要多实现时才抽取接口
-
-### 9.3 字段注入优于构造器注入
-
-- 使用 `@Resource` 字段注入，代码更紧凑
-- 不编写构造器注入的大段参数列表
-
-### 9.4 避免冗余代码
+### 9.2 避免冗余代码
 
 - 不写多余的 `else`（使用 Early Return）
 - JPA 实体字段依赖隐式列映射，不加多余的 `@Column`
 - 非Controller入参DTO，字段不加多余的校验注解（在 Proto 层或拦截器层统一校验）
 
-### 9.5 禁止魔法值
+### 9.3 禁止魔法值
 
 - 不在逻辑代码中直接使用未经定义的字面量（魔法值）
 - 字符串、数字等常量必须在项目约定的常量包中定义为枚举类或常量接口
@@ -739,7 +530,7 @@ if (Objects.equals(type, "question-block")) { ... }
 if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
 ```
 
-### 9.6 工具方法提取
+### 9.4 工具方法提取
 
 - 通用、可复用的工具方法不允许写在业务类中，必须提取到对应的 `Utils` 工具类
 - 工具类统一放在项目约定的工具包下
@@ -750,25 +541,7 @@ if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
 
 ### 10.1 Spring Boot Starter 封装（非必须）
 
-将远程服务调用封装为独立 Starter，实现跨项目复用：
-
-```
-xxx-remote-spring-boot-starter/
-├── http/
-│   ├── ipublish/
-│   │   ├── IPublishTemplate.java            # 调用模板
-│   │   ├── config/
-│   │   │   ├── IPublishAutoConfiguration.java
-│   │   │   └── IPublishRemoteProperties.java
-│   │   └── model/                           # 请求/响应模型
-│   └── course/
-│       ├── CourseTemplate.java
-│       └── config/
-└── common/
-    ├── exception/                           # 统一异常
-    ├── model/                               # 通用响应模型
-    └── utils/                               # 工具类
-```
+将远程服务调用封装为独立 Starter（见 1.1 中 `xxx-remote-spring-boot-starter` 模块），实现跨项目复用：
 
 - 通过 `@ConditionalOnProperty` 控制按需加载
 - 通过 `@ConfigurationProperties` 绑定配置
@@ -780,27 +553,7 @@ xxx-remote-spring-boot-starter/
 - 工具类不实例化（无构造器或私有构造器）
 - 抽取到 `base` 模块的 `common.utils` 包中
 
-```java
-public class BookUtils {
-
-    public static String genBookId() {
-        return String.format(CourseConstants.BOOK_ID_FMT,
-                CourseConstants.SOURCE_COURSE, UUID.randomUUID());
-    }
-
-    public static boolean isCustomBookId(String id) {
-        return StringUtils.startsWith(id, CourseConstants.SOURCE_COURSE);
-    }
-}
-```
-
-### 10.3 常量集中管理
-
-- 业务常量集中在 `common.constant` 包
-- 使用接口定义常量，嵌套接口分类
-- 错误码使用枚举，带 `code` + `msg`
-
-### 10.4 gRPC 拦截器链
+### 10.3 gRPC 拦截器链
 
 通过 `@Order` + `@GRpcGlobalInterceptor` 实现可插拔的拦截器链：
 
@@ -810,7 +563,7 @@ public class BookUtils {
 | 1 | `GrpcValidationInterceptor` | 参数校验（protoc-gen-validate） |
 | 2 | `GrpcExceptionInterceptor` | 异常处理（统一转为 gRPC Status） |
 
-### 10.5 Converter 层复用
+### 10.4 Converter 层复用
 
 Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Service 层散落转换代码。
 
@@ -824,48 +577,11 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 - 通过 `spring.profiles.include` 拆分配置模块（common、mq）
 - 使用 `${}` 引用避免重复配置
 
-```yaml
-server:
-  port: 8081
-  servlet:
-    context-path: /api/adapter
-    application-display-name: model-adapter
-
-spring:
-  application:
-    name: ${server.servlet.application-display-name}
-  profiles:
-    include: common,mq
-```
-
 ### 11.2 Properties 类
 
 - 使用 `@ConfigurationProperties(prefix = "xxx")` 绑定
 - Lombok `@Data` 自动生成 getter/setter
 - URI 等复杂配置使用内部类分组
-
-```java
-@Data
-@ConfigurationProperties(prefix = "http.ipublish")
-public class IPublishRemoteProperties {
-
-    private boolean enabled;
-    private String baseUrl;
-    private int timeout;
-    private String tokenHeader;
-    private Uri uri;
-
-    @Data
-    public static class Uri {
-        private String accessTokenUri;
-        private String getBookStructUri;
-
-        public String getGetBookStructUri(String bookId) {
-            return String.format(getBookStructUri, bookId);
-        }
-    }
-}
-```
 
 ---
 
@@ -889,18 +605,18 @@ public class IPublishRemoteProperties {
 ## 附录：编码风格速查表
 
 ```
-类（方法、字段）注解顺序        Swagger → Lombok → JPA/gRPC/Spring/SpringMVC，原则：与功能越无关的注解越往前放
-依赖注入                     @Resource（不用 @Autowired）
-Javadoc                     所有方法必写，@author + @date（yyyy/M/d）
-日志                         @Slf4j + 占位符，业务中文/框架英文
-异常处理          					 自定义 RuntimeException + 错误码枚举
-Service 设计      				   无接口，直接 @Service 类
-返回值            					  Early Return，Optional 链式
-集合              				  Guava Lists/Maps，Stream API
-字符串格式化      					  String.format()
-常量              				  interface 定义，嵌套分组
-配置              				  @ConfigurationProperties 绑定
-远程调用          				   Template 模式 + WebClient + Guava Cache
+类（方法、字段）注解顺序    Swagger → Lombok → 自定义注解 → Spring/JPA/gRPC，原则：与功能越无关的注解越往前放
+依赖注入                  @Resource（不用 @Autowired）
+Javadoc                  所有方法必写，@author + @date（yyyy/M/d）
+日志                      @Slf4j + 占位符，业务中文/框架英文
+异常处理                  自定义 RuntimeException + 错误码枚举
+Service 设计              无接口，直接 @Service 类
+返回值                    Early Return，Optional 链式
+集合                      Guava Lists/Maps，Stream API
+字符串格式化              String.format()
+常量                      interface 定义，嵌套分组
+配置                      @ConfigurationProperties 绑定
+远程调用                  Template 模式 + WebClient + Guava Cache
 ```
 
 ---
