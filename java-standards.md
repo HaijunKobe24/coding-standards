@@ -141,11 +141,6 @@ public class BookService {
 
 - **不使用通配符导入**，逐条显式 import
 - **不在逻辑代码中写类的完全限定路径**，必须提前 import
-- 分组顺序（组间空行分隔）：
-  1. `java.*`
-  2. `javax.*`
-  3. 第三方库（`cn.hutool`, `com.google`, `io.grpc`, `lombok`, `org.springframework` 等）
-  4. 项目内部包（`cn.unipus.*`）
 
 ---
 
