@@ -127,6 +127,7 @@ public class BookService {
 ### 2.4 Import 规则
 
 - **不在逻辑代码中写类的完全限定路径**，必须提前 import
+- **删除多余的 import**：未被使用的 import 语句必须及时清理，保持 import 列表精简
 
 ---
 
