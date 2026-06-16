@@ -284,6 +284,25 @@ public <T> List<T> courseBookNodes(String bookId) throws ValidationException, Il
 - 无返回值的 void 方法省略 `@return`
 - `@throws`：异常描述（若声明了异常）
 
+**例外：重写方法（含 `@Override` 注解）不需要 Javadoc**，因为继承自父类/接口方法，文档由父类提供。除非需要补充与父类不同的语义或注意事项，否则保持简洁，避免重复。
+
+```java
+// 重写方法无需 Javadoc
+@Override
+public String toString() {
+    return "Book[" + id + "]";
+}
+
+// 仅在补充信息时才写 Javadoc
+/**
+ * 重写以追加业务标识到日志上下文
+ */
+@Override
+public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {
+    // ...
+}
+```
+
 ### 4.3 字段级 Javadoc
 
 实体类、DTO、枚举的每个字段都配注释：
