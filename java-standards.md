@@ -1,3 +1,9 @@
+---
+description: Java 编码规范完整版 — 当精简版未覆盖的场景需要查阅详细规则时加载
+alwaysApply: false
+enabled: true
+---
+
 # Java Development Standards (haijun.gao)
 
 本文档体现了 haijun.gao 在 Java 后端开发中的编码偏好与规范。
