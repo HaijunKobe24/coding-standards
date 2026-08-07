@@ -1,6 +1,6 @@
 # Java Development Standards (haijun.gao)
 
-本文档基于 [model-adapter](https://github.com/HaijunKobe24/model-adapter) 项目的实际代码提炼而成，体现了 haijun.gao 在 Java 后端开发中的编码偏好与规范。
+本文档体现了 haijun.gao 在 Java 后端开发中的编码偏好与规范。
 
 ---
 
@@ -31,9 +31,8 @@
 project/
 ├── xxx-api/                              # 主服务（REST + gRPC），承载业务逻辑
 ├── xxx-base/                             # 数据层（JPA 实体、Repository、常量、工具类）
-├── xxx-client/                           # gRPC 客户端（Proto 定义、DTO、Converter）
+├── xxx-client/                           # HTTP、gRPC 客户端（Proto 定义、DTO、Converter）
 ├── xxx-consumer/                         # 消息消费者（Kafka Listener）
-└── xxx-remote-spring-boot-starter/       # 远程服务 SDK（HTTP 模板、自动配置）
 ```
 
 ### 1.2 包结构
@@ -41,7 +40,7 @@ project/
 按功能域 + 技术层分包，基础包路径格式：`cn.unipus.{project}.{module}.{layer}`
 
 ```
-cn.unipus.modeladapter.api
+cn.unipus.xxx.api
 ├── grpc
 │   ├── interceptor/          # gRPC 拦截器
 │   └── service/              # gRPC 服务实现
@@ -50,7 +49,7 @@ cn.unipus.modeladapter.api
 ├── service/                  # 业务服务层
 └── config/                   # 配置类
 
-cn.unipus.modeladapter.base
+cn.unipus.xxx.base
 ├── common
 │   ├── constant/             # 常量和枚举
 │   └── utils/                # 工具类
@@ -137,21 +136,21 @@ public class BookService {
 
 | 类型 | 后缀约定 | 示例 |
 |------|----------|------|
-| 业务服务 | `Service` | `IPublishBookService` |
-| REST 控制器 | `Controller` | `IPublishController` |
-| gRPC 服务 | `GrpcService` | `CourseGrpcService` |
+| 业务服务 | `Service` | `BookService` |
+| REST 控制器 | `Controller` | `BookController` |
+| gRPC 服务 | `GrpcService` | `BookGrpcService` |
 | 数据访问 | `Repository` | `BookRepository` |
-| 远程调用模板 | `Template` | `IPublishTemplate`, `CourseTemplate` |
+| 远程调用模板 | `Template` | `OrderTemplate`, `UserTemplate` |
 | 拦截器 | `Interceptor` | `GrpcLogInterceptor` |
-| 配置属性 | `Properties` | `IPublishRemoteProperties` |
-| 自动配置 | `AutoConfiguration` | `IPublishAutoConfiguration` |
-| 数据传输对象 | `DTO` | `BookStructDTO`, `CopyCourseDataDTO` |
+| 配置属性 | `Properties` | `OrderRemoteProperties` |
+| 自动配置 | `AutoConfiguration` | `OrderAutoConfiguration` |
+| 数据传输对象 | `DTO` | `BookStructDTO` |
 | 请求对象 | `Request` | `AccessTokenRequest` |
 | 响应对象 | `Response` | `HttpResponse` |
 | 转换器 | `Convert` / `Converter` | `CourseProtoObjectConvert`, `ModelConverter` |
 | 工具类 | `Utils` | `BookUtils`, `ExceptionUtils`, `HttpUtils` |
 | 枚举 | `Enum` | `CodeEnum`, `ContentStatusEnum` |
-| 常量接口 | `Constants` | `CourseConstants` |
+| 常量接口 | `Constants` | `BookConstants` |
 | JPA 实体 | 无后缀 | `Book`, `BookUnit`, `Course` |
 | 消息监听器 | `Listener` | `UnitUpdateListener` |
 
@@ -249,7 +248,7 @@ public enum ContentStatusEnum {
  * @date 2025/7/3
  */
 @Service
-public class IPublishBookService {
+public class BookService {
 ```
 
 要素：
@@ -272,7 +271,7 @@ public class IPublishBookService {
  * @throws ValidationException    校验失败时抛出异常
  * @throws IllegalAccessException 访问失败时抛出异常
  */
-public <T> List<T> courseBookNodes(String bookId) throws ValidationException, IllegalAccessException {
+public <T> List<T> bookNodes(String bookId) throws ValidationException, IllegalAccessException {
 ```
 
 要素：
@@ -378,7 +377,6 @@ void deleteByBookId(@Param("bookId") String bookId);
 
 - **不定义接口，直接用 `@Service` 类**（实用主义，避免无意义的 Interface/Impl 分离）
 - public 方法为入口，内部用 private 方法分解逻辑
-- 调用自身私有方法使用 `this.` 前缀（非必须）
 
 ```java
 public CopyCourseDataDTO copyBook(String bookId, String openId) {
@@ -401,12 +399,10 @@ public CopyCourseDataDTO copyBook(String bookId, String openId) {
 - 使用 WebClient 进行 HTTP 调用
 - 请求/响应均记录日志
 - 统一调用 `ExceptionUtils.checkAndThrow()` 校验响应
-- Token 等信息通过 Guava Cache 缓存
 
 ### 6.4 消息消费者
 
 - `@KafkaListener` 配置从 YAML 中引用（SpEL 表达式），非必须
-- 消息体使用 Hutool `JSONUtil.toBean()` 反序列化，非必须
 - 异常情况记录日志后 return，不中断消费，非必须
 
 ### 6.5 对象转换
@@ -507,8 +503,6 @@ public class HttpException extends RuntimeException {
 ### 8.3 日志格式
 
 - 使用 **SLF4J 占位符 `{}`**，不用字符串拼接
-- 业务日志使用中文描述
-- 拦截器/框架日志使用英文 + `LOG_PREFIX` 前缀
 
 ### 8.4 远程调用日志
 
@@ -546,7 +540,7 @@ public class HttpException extends RuntimeException {
 if (Objects.equals(type, "question-block")) { ... }
 
 // ✓ 正确：使用常量引用
-if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
+if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 ```
 
 ### 9.4 工具方法提取
@@ -558,21 +552,13 @@ if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
 
 ## 10. 复用设计
 
-### 10.1 Spring Boot Starter 封装（非必须）
-
-将远程服务调用封装为独立 Starter（见 1.1 中 `xxx-remote-spring-boot-starter` 模块），实现跨项目复用：
-
-- 通过 `@ConditionalOnProperty` 控制按需加载
-- 通过 `@ConfigurationProperties` 绑定配置
-- 通过 `spring.factories` 注册自动配置
-
-### 10.2 工具类复用
+### 10.1 工具类复用
 
 - 工具类方法全部 `static`
 - 工具类不实例化（无构造器或私有构造器）
 - 抽取到 `base` 模块的 `common.utils` 包中
 
-### 10.3 gRPC 拦截器链
+### 10.2 gRPC 拦截器链
 
 通过 `@Order` + `@GRpcGlobalInterceptor` 实现可插拔的拦截器链：
 
@@ -582,7 +568,7 @@ if (Objects.equals(type, CourseConstants.QUERY_TYPE)) { ... }
 | 1 | `GrpcValidationInterceptor` | 参数校验（protoc-gen-validate） |
 | 2 | `GrpcExceptionInterceptor` | 异常处理（统一转为 gRPC Status） |
 
-### 10.4 Converter 层复用
+### 10.3 Converter 层复用
 
 Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Service 层散落转换代码。
 
@@ -642,4 +628,3 @@ Service 设计              无接口，直接 @Service 类
 
 > **维护者**：haijun.gao
 > **最后更新**：2026/4/14
-> **基准项目**：[model-adapter](https://github.com/HaijunKobe24/model-adapter)
