@@ -115,7 +115,7 @@ public class BookService {
     private BookRepository bookRepository;
 
     @Resource
-    private IPublishTemplate iPublishTemplate;
+    private OrderTemplate orderTemplate;
 
     public List<UnitStructDTO> courseBookNodes(String bookId) {
         // ...
