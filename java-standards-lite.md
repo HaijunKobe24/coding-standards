@@ -2,6 +2,7 @@
 description: Java 编码规范 — 写任何 Java 代码时必须遵守
 alwaysApply: true
 enabled: true
+inclusion: always
 ---
 
 # Java 编码规范 (haijun.gao)

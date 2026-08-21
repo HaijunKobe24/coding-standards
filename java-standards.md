@@ -2,6 +2,7 @@
 description: Java 编码规范完整版 — 当精简版未覆盖的场景需要查阅详细规则时加载
 alwaysApply: false
 enabled: true
+inclusion: manual
 ---
 
 # Java Development Standards (haijun.gao)

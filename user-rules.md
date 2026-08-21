@@ -2,7 +2,7 @@
 description: 用户级通用偏好规则（语言、工具、文档风格、Skills 使用等），适用于所有项目
 alwaysApply: true
 enabled: true
-updatedAt: 2026-08-07T00:00:00.000Z
+inclusion: always
 ---
 
 # 关键原则
