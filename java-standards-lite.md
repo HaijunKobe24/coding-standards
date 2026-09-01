@@ -266,6 +266,7 @@ public enum ContentStatusEnum {
 
 - JPA 实体字段依赖隐式列映射，不加多余的 `@Column`
 - 非 Controller 入参 DTO 不加多余的校验注解
+- 通用、可复用的工具方法**禁止写在业务类中**，必须提取到对应的 `Utils` 工具类（存放位置遵循项目实际规划）
 - 工具类方法全部 `static`，不实例化
 - 对象转换集中在 `Converter`/`Convert` 类中，不在 Service 层散落
 - 配置类用 `@ConfigurationProperties` 绑定，Lombok `@Data` 生成 getter/setter

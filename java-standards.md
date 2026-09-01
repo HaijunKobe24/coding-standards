@@ -550,7 +550,7 @@ if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 
 - 工具类方法全部 `static`
 - 工具类不实例化（无构造器或私有构造器）
-- 抽取到 `base` 模块的 `common.utils` 包中
+- 默认抽取到 `base` 模块的 `common.utils` 包中；具体存放位置可按项目实际规划调整
 
 ### 10.2 gRPC 拦截器链
 
