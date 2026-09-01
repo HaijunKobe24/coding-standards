@@ -139,6 +139,8 @@ private OrderTemplate orderTemplate;
 
 **不定义接口，直接用 `@Service` 类。** public 方法为入口，private 方法分解逻辑。
 
+**通用、可复用的工具方法禁止写在 Service（或其他业务类）中**，必须提取到对应的 `Utils` 工具类（存放位置遵循项目实际规划）。
+
 ## 8. 返回值风格
 
 - **Early Return**：条件分支尽早返回，减少嵌套
@@ -266,7 +268,6 @@ public enum ContentStatusEnum {
 
 - JPA 实体字段依赖隐式列映射，不加多余的 `@Column`
 - 非 Controller 入参 DTO 不加多余的校验注解
-- 通用、可复用的工具方法**禁止写在业务类中**，必须提取到对应的 `Utils` 工具类（存放位置遵循项目实际规划）
 - 工具类方法全部 `static`，不实例化
 - 对象转换集中在 `Converter`/`Convert` 类中，不在 Service 层散落
 - 配置类用 `@ConfigurationProperties` 绑定，Lombok `@Data` 生成 getter/setter
@@ -284,3 +285,4 @@ public enum ContentStatusEnum {
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
 - [ ] 无魔法值（字面量必须提取为常量或枚举）
 - [ ] 无多余 `@Column`、无多余 `else`
+- [ ] 通用工具方法已提取到 `Utils`，未写在 Service 等业务类中
