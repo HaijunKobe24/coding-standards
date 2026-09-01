@@ -581,6 +581,7 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 - 使用 `@ConfigurationProperties(prefix = "xxx")` 绑定
 - Lombok `@Data` 自动生成 getter/setter
 - URI 等复杂配置使用内部类分组
+- **配置项禁止散落在 Service（或其他业务类）中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到配置类统一绑定管理
 
 ---
 

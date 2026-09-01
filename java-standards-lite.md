@@ -141,6 +141,8 @@ private OrderTemplate orderTemplate;
 
 **通用、可复用的工具方法禁止写在 Service（或其他业务类）中**，必须提取到对应的 `Utils` 工具类（存放位置遵循项目实际规划）。
 
+**配置项禁止散落在 Service（或其他业务类）中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到 `@ConfigurationProperties` 配置类统一绑定管理。
+
 ## 8. 返回值风格
 
 - **Early Return**：条件分支尽早返回，减少嵌套
@@ -286,3 +288,4 @@ public enum ContentStatusEnum {
 - [ ] 无魔法值（字面量必须提取为常量或枚举）
 - [ ] 无多余 `@Column`、无多余 `else`
 - [ ] 通用工具方法已提取到 `Utils`，未写在 Service 等业务类中
+- [ ] 配置项已集中到 `@ConfigurationProperties` 配置类，未散落在 Service 等业务类中
