@@ -89,20 +89,7 @@ if (BookUtils.isCustomBookId(bookId)) {
 return this.copyOfficialBook(bookId, openId);
 ```
 
-### 2.2 行宽
-
-- 控制在 **100 字符**以内，超出时换行
-- 换行对齐至上一行参数起始位置（缩进 8 空格）
-
-```java
-@Override
-public void createUnit(CreateUnitRequestPO request,
-        StreamObserver<CreateUnitResponsePO> responseObserver) {
-    // ...
-}
-```
-
-### 2.3 空行
+### 2.2 空行
 
 | 位置 | 空行数 |
 |------|--------|
@@ -130,7 +117,7 @@ public class BookService {
 }
 ```
 
-### 2.4 Import 规则
+### 2.3 Import 规则
 
 - **不在逻辑代码中写类的完全限定路径**，必须提前 import
 - **删除多余的 import**：未被使用的 import 语句必须及时清理，保持 import 列表精简
