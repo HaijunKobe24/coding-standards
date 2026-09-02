@@ -103,6 +103,8 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 private String refId;
 ```
 
+**`@Resource` 注入的字段不需要 Javadoc。**
+
 ## 5. 注解顺序
 
 原则：与功能越无关的注解越往前放。

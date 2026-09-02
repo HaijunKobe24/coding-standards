@@ -307,6 +307,8 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 private String refId;
 ```
 
+**`@Resource` 注入的字段不需要 Javadoc。**
+
 ### 4.4 常量/内部接口 Javadoc
 
 常量接口中的嵌套接口配完整 Javadoc（含 `@author`、`@date`）。
