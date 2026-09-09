@@ -232,7 +232,7 @@ public enum ContentStatusEnum {
 
 ### 4.1 类级 Javadoc
 
-**所有类必须添加 Javadoc**，格式如下：
+**所有类必须添加 Javadoc**（含内部类、内部接口、内部枚举，见 4.4），格式如下：
 
 ```java
 /**
@@ -309,9 +309,48 @@ private String refId;
 
 **`@Resource` 注入的字段不需要 Javadoc。**
 
-### 4.4 常量/内部接口 Javadoc
+### 4.4 内部类 Javadoc
 
-常量接口中的嵌套接口配完整 Javadoc（含 `@author`、`@date`）。
+**内部类、内部接口、内部枚举与顶层类同等要求**，格式完全一致（一句话职责 + `@author` + `@date`），不因嵌套、不因 `private`、不因体积小而省略。常见场景：
+
+| 场景 | 示例 |
+|---|---|
+| 常量接口的嵌套分类接口 | `CourseConstants.OfficialFlag` |
+| 配置类的分组内部类 | `OrderRemoteProperties.Uri` |
+| DTO 的嵌套结构类 | `BookStructDTO.Unit` |
+| 私有静态内部类（构建器、临时载体） | `BookService.CopyContext` |
+
+```java
+@Data
+@ConfigurationProperties(prefix = "order.remote")
+public class OrderRemoteProperties {
+
+    /**
+     * 服务地址
+     */
+    private String host;
+
+    /**
+     * 订单服务接口路径
+     *
+     * @author haijun.gao
+     * @date 2025/7/17
+     */
+    @Data
+    public static class Uri {
+
+        /**
+         * 查询订单详情
+         */
+        private String detail;
+    }
+}
+```
+
+注意区分内部类上的**两类注释**，两者都要写、互不替代：
+
+- 字段位置的内部类**实例**（如 `private Uri uri;`）→ 按 4.3 配字段注释
+- 内部类**类型声明**（如 `public static class Uri`）→ 按本节配类级 Javadoc
 
 ---
 
@@ -721,7 +760,7 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 ```
 类（方法、字段）注解顺序    Swagger → Lombok → 自定义注解 → Spring/JPA/gRPC，原则：与功能越无关的注解越往前放
 依赖注入                  @Resource（不用 @Autowired）
-Javadoc                  所有方法必写，@author + @date（yyyy/M/d）
+Javadoc                  所有类（含内部类）和方法必写，@author + @date（yyyy/M/d）
 日志                      @Slf4j + 占位符，业务中文/框架英文
 异常处理                  自定义 RuntimeException + 错误码枚举
 Service 设计              无接口，直接 @Service 类；只留注入字段 + public 入口 + 依赖注入的 private 编排

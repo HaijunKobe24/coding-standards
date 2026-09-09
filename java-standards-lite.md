@@ -63,6 +63,7 @@ public class BookService {
 ```
 
 - `@date` 格式：`yyyy/M/d`
+- **内部类、内部接口、内部枚举同样必须**（常量接口的嵌套接口、配置类的分组内部类、DTO 的嵌套结构类），格式与顶层类完全一致，不因嵌套而省略 `@author` / `@date`
 
 ### 方法级（所有 public/private 方法必须）
 
@@ -220,9 +221,16 @@ if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 
 ```java
 public interface CourseConstants {
+
     String CREATED_TYPE = "customized";
     String QUERY_TYPE = "question-block";
 
+    /**
+     * 是否官方教材
+     *
+     * @author haijun.gao
+     * @date 2025/7/17
+     */
     interface OfficialFlag {
         int YES = 1;
         int NO = 0;
@@ -287,7 +295,7 @@ public enum ContentStatusEnum {
 写完 Java 代码后，必须逐条核对以下高频易错项，不符合的立即修正：
 
 - [ ] 依赖注入用 `@Resource`，不是 `@Autowired`
-- [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`）
+- [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`），**内部类/接口/枚举也逐个核对**
 - [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`）
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
 - [ ] 无魔法值（字面量必须提取为常量或枚举）
