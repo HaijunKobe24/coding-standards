@@ -384,6 +384,119 @@ public CopyCourseDataDTO copyBook(String bookId, String openId) {
 }
 ```
 
+Service 类**只保留三样东西**：`@Resource` 注入字段、public 业务入口、依赖注入字段的 private 编排方法。除此之外的内容（static 字段、工具方法、配置值）一律移出，规则见 6.1.1 ~ 6.1.3。
+
+以下规则适用于所有业务类：`Service`、`Controller`、`GrpcService`、`Listener`、`Template`。
+
+#### 6.1.1 业务类中禁止出现 static 字段
+
+业务类中**不允许出现任何 `static` 字段**，`private static final` 也不例外。看到 `static` 就是违规，按下表移走：
+
+| 出现的 static 字段 | 必须移到 |
+|---|---|
+| 字符串/数字常量、格式模板（`LOG_PREFIX`、`BOOK_ID_FMT`） | `XxxConstants` 接口（见 3.4） |
+| 有状态语义的取值（状态码、类型码） | 枚举类（见 3.5） |
+| `Pattern`、`DateTimeFormatter` 等线程安全的重用实例 | 对应的 `XxxUtils` 工具类 |
+| 静态 `Map` / `List` / `Set` 映射表 | `XxxConstants` 接口，或枚举 + 查表方法 |
+| Guava `Cache` / `LoadingCache` | 配置类中 `@Bean` 声明，业务类用 `@Resource` 注入 |
+| 可配置值（超时、开关、URL、批量大小） | `@ConfigurationProperties` 配置类（见 11.2） |
+
+```java
+// ✗ 错误：Service 里攒静态常量、静态实例、静态映射表
+@Service
+public class BookService {
+
+    private static final String BOOK_ID_FMT = "%s_%s";
+    private static final Pattern CUSTOM_ID = Pattern.compile("^C\\d+$");
+    private static final Map<String, String> TYPE_MAP = Maps.newHashMap();
+    private static final int BATCH_SIZE = 200;
+}
+
+// ✓ 正确：常量进 Constants，正则进 Utils，可配置值进配置类
+@Service
+public class BookService {
+
+    @Resource
+    private BookProperties bookProperties;
+
+    public void copy(String prefix, String suffix) {
+        String bookId = String.format(BookConstants.BOOK_ID_FMT, prefix, suffix);
+        if (BookUtils.isCustomBookId(bookId)) {
+            this.batchCopy(bookId, bookProperties.getBatchSize());
+        }
+    }
+}
+```
+
+注意两个常见的自我辩解，都不成立：
+
+- **"这个常量只有本类用，放 Constants 是过度设计"** —— 归属由内容性质决定，不由使用范围决定。单一使用方的常量同样放 `Constants`，必要时用嵌套接口按类收敛（如 `BookConstants.Copy`）。
+- **"`private static final` 已经不是魔法值了"** —— 9.3 禁止魔法值和本条是两条独立规则，满足前者不豁免后者。
+
+#### 6.1.2 业务类中禁止写工具方法
+
+不用"是否通用"这种主观判断，对业务类中**每一个** private 方法逐个执行下面这条机械判据：
+
+> 方法体内是否访问了 `this` 的字段（`@Resource` 注入的依赖、成员变量），或调用了会访问这些字段的实例方法？
+> - **否** → 它就是工具方法（等价于"补上 `static` 也能编译通过"），**必须移出业务类**。
+> - **是** → 属于业务编排，保留。
+
+移出后的落点：
+
+| 方法性质 | 落点 |
+|---|---|
+| 无领域语义的通用处理（字符串、集合、时间、编解码） | 通用 `Utils`（如 `DateUtils`、`HttpUtils`） |
+| 带领域语义的纯计算、纯判断 | 领域工具类（如 `BookUtils.isCustomBookId()`） |
+| 对象结构转换、响应体拼装 | `Converter` / `Convert` 类（见 6.5、10.3） |
+| 纯参数校验 | `Utils` 或统一校验层（见 7.2） |
+
+```java
+// ✗ 错误：三个方法都不访问注入字段，却留在 Service 里
+@Service
+public class BookService {
+
+    @Resource
+    private BookRepository bookRepository;
+
+    private boolean isCustomBookId(String bookId) {
+        return StringUtils.startsWith(bookId, BookConstants.CUSTOM_PREFIX);
+    }
+
+    private String genBookId(String prefix, String suffix) {
+        return String.format(BookConstants.BOOK_ID_FMT, prefix, suffix);
+    }
+
+    private UnitDTO toDTO(BookUnit unit) {
+        UnitDTO dto = new UnitDTO();
+        dto.setId(unit.getId());
+        return dto;
+    }
+}
+
+// ✓ 正确：判断和拼装归 Utils，转换归 Converter，Service 只留编排
+@Service
+public class BookService {
+
+    @Resource
+    private BookRepository bookRepository;
+
+    public UnitDTO loadUnit(String bookId) {
+        if (BookUtils.isCustomBookId(bookId)) {
+            return BookConverter.toDTO(bookRepository.findCustom(bookId));
+        }
+        return BookConverter.toDTO(bookRepository.findOfficial(bookId));
+    }
+}
+```
+
+业务类中**同样不允许出现 `static` 方法**——静态方法天然不依赖实例状态，按上述判据必然属于 `Utils`。
+
+工具类的组织方式见 10.1；存放位置遵循项目实际规划，默认 `base` 模块的 `common.utils` 包。
+
+#### 6.1.3 业务类中禁止散落配置项
+
+**配置项禁止散落在业务类中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到 `@ConfigurationProperties` 配置类统一绑定管理，详见 11.2。
+
 ### 6.2 gRPC 服务实现
 
 - 继承生成的 `*ImplBase` 基类
@@ -541,8 +654,7 @@ if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 
 ### 9.4 工具方法提取
 
-- 通用、可复用的工具方法不允许写在业务类中，必须提取到对应的 `Utils` 工具类
-- 工具类统一放在项目约定的工具包下
+工具方法禁止留在业务类中，判定标准与落点见 **6.1.2**；业务类中 static 字段的处理见 **6.1.1**。
 
 ---
 
@@ -583,7 +695,7 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 - 使用 `@ConfigurationProperties(prefix = "xxx")` 绑定
 - Lombok `@Data` 自动生成 getter/setter
 - URI 等复杂配置使用内部类分组
-- **配置项禁止散落在 Service（或其他业务类）中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到配置类统一绑定管理
+- **配置项禁止散落在业务类中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到配置类统一绑定管理，见 6.1.3
 
 ---
 
@@ -612,7 +724,8 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 Javadoc                  所有方法必写，@author + @date（yyyy/M/d）
 日志                      @Slf4j + 占位符，业务中文/框架英文
 异常处理                  自定义 RuntimeException + 错误码枚举
-Service 设计              无接口，直接 @Service 类
+Service 设计              无接口，直接 @Service 类；只留注入字段 + public 入口 + 依赖注入的 private 编排
+业务类禁止项              static 字段、static 方法、不访问 this 字段的 private 方法、散落的配置项
 返回值                    Early Return，Optional 链式
 集合                      Guava Lists/Maps，Stream API
 字符串格式化              String.format()

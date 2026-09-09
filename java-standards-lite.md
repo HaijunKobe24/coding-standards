@@ -13,16 +13,7 @@ inclusion: always
 
 ## 1. 项目结构
 
-Maven 多模块，包路径格式：`cn.unipus.{project}.{module}.{layer}`
-
-```
-xxx-api/          → cn.unipus.xxx.api.{grpc/service | rest/controller | service | config}
-xxx-base/         → cn.unipus.xxx.base.{common/constant | common/utils | db/entity | db/repository}
-xxx-client/       → HTTP、gRPC 客户端（Proto 定义、DTO、Converter）
-xxx-consumer/     → Kafka 消费者
-```
-
-### 依赖管理
+Maven 多模块，包路径格式 `cn.unipus.{project}.{module}.{layer}`。新增文件的模块与包位置**沿用项目现有结构**，不自行新建目录层级。
 
 - 父 POM 用 `<dependencyManagement>` 统一版本
 - 子模块**不声明版本号**，全部继承父 POM
@@ -141,9 +132,21 @@ private OrderTemplate orderTemplate;
 
 **不定义接口，直接用 `@Service` 类。** public 方法为入口，private 方法分解逻辑。
 
-**通用、可复用的工具方法禁止写在 Service（或其他业务类）中**，必须提取到对应的 `Utils` 工具类（存放位置遵循项目实际规划）。
+以下三条对所有业务类生效（`Service` / `Controller` / `GrpcService` / `Listener` / `Template`）：
 
-**配置项禁止散落在 Service（或其他业务类）中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到 `@ConfigurationProperties` 配置类统一绑定管理。
+1. **禁止任何 `static` 字段和 `static` 方法**，`private static final` 也不例外。常量 → `Constants` 接口，状态语义 → 枚举，`Pattern` 等重用实例 → `Utils`，`Cache` → 配置类 `@Bean` 后注入，可配置值 → `@ConfigurationProperties`。"只有本类用"和"已经不是魔法值"都不是保留理由。
+2. **禁止工具方法**。逐个检查 private 方法：不访问 `this` 字段的（即补上 `static` 也能编译通过），就是工具方法，必须移出——纯计算/判断 → `Utils`，对象转换 → `Converter`。
+3. **禁止散落配置项**（`@Value` 直接注入、硬编码可配置值），集中到 `@ConfigurationProperties` 配置类。
+
+```java
+// ✗ Service 里出现 static 字段、不访问 this 的方法
+private static final String BOOK_ID_FMT = "%s_%s";
+private boolean isCustomBookId(String id) { return StringUtils.startsWith(id, PREFIX); }
+
+// ✓ 常量进 Constants，判断进 Utils，Service 只留编排
+String bookId = String.format(BookConstants.BOOK_ID_FMT, prefix, suffix);
+if (BookUtils.isCustomBookId(bookId)) { ... }
+```
 
 ## 8. 返回值风格
 
@@ -289,5 +292,6 @@ public enum ContentStatusEnum {
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
 - [ ] 无魔法值（字面量必须提取为常量或枚举）
 - [ ] 无多余 `@Column`、无多余 `else`
-- [ ] 通用工具方法已提取到 `Utils`，未写在 Service 等业务类中
-- [ ] 配置项已集中到 `@ConfigurationProperties` 配置类，未散落在 Service 等业务类中
+- [ ] 业务类中搜 `static`，命中数为 0
+- [ ] 业务类每个 private 方法都访问了 `this` 字段，否则已移到 `Utils` / `Converter`
+- [ ] 配置项已集中到 `@ConfigurationProperties`，未散落在业务类中
