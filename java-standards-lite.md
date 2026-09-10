@@ -158,9 +158,9 @@ if (BookUtils.isCustomBookId(bookId)) { ... }
 // ✓ Early Return
 public CopyCourseDataDTO copyBook(String bookId, String openId) {
     if (BookUtils.isCustomBookId(bookId)) {
-        return this.copyCustomBook(bookId, openId);
+        return copyCustomBook(bookId, openId);
     }
-    return this.copyOfficialBook(bookId, openId);
+    return copyOfficialBook(bookId, openId);
 }
 
 // ✓ Optional 链式

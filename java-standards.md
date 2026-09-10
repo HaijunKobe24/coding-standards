@@ -84,9 +84,9 @@ cn.unipus.xxx.base
 
 ```java
 if (BookUtils.isCustomBookId(bookId)) {
-    return this.copyCustomBook(bookId, openId);
+    return copyCustomBook(bookId, openId);
 }
-return this.copyOfficialBook(bookId, openId);
+return copyOfficialBook(bookId, openId);
 ```
 
 ### 2.2 空行
@@ -417,9 +417,9 @@ void deleteByBookId(@Param("bookId") String bookId);
 public CopyCourseDataDTO copyBook(String bookId, String openId) {
     log.info("开始复制教材，openId: {}, bookId: {}", openId, bookId);
     if (BookUtils.isCustomBookId(bookId)) {
-        return this.copyCustomBook(bookId, openId);
+        return copyCustomBook(bookId, openId);
     }
-    return this.copyOfficialBook(bookId, openId);
+    return copyOfficialBook(bookId, openId);
 }
 ```
 
@@ -461,7 +461,7 @@ public class BookService {
     public void copy(String prefix, String suffix) {
         String bookId = String.format(BookConstants.BOOK_ID_FMT, prefix, suffix);
         if (BookUtils.isCustomBookId(bookId)) {
-            this.batchCopy(bookId, bookProperties.getBatchSize());
+            batchCopy(bookId, bookProperties.getBatchSize());
         }
     }
 }
