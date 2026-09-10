@@ -21,6 +21,7 @@ inclusion: always
 - Maven 仓库的存储路径在 settings 文件中
 - 若项目中使用 JDK1.8，则 Maven 构建时，使用此 JDK：~/MyFiles/Program/JDK/jdk1.8.0_431.jdk/Contents/Home
 - 需要 debug 本地 java 进程时，可以使用 Arthas，确保本地安装了 as.sh
+- sleep 命令使用时，不得超过 10 秒
 
 
 ## 文档相关
