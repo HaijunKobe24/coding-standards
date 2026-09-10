@@ -2,6 +2,7 @@
 description: Java 编码规范完整版 — 当精简版未覆盖的场景需要查阅详细规则时加载
 alwaysApply: false
 enabled: true
+trigger: model_decision
 inclusion: manual
 ---
 
@@ -318,7 +319,7 @@ private String refId;
 | 常量接口的嵌套分类接口 | `CourseConstants.OfficialFlag` |
 | 配置类的分组内部类 | `OrderRemoteProperties.Uri` |
 | DTO 的嵌套结构类 | `BookStructDTO.Unit` |
-| 私有静态内部类（构建器、临时载体） | `BookService.CopyContext` |
+| 枚举的嵌套接口/内部枚举 | `ContentStatusEnum.Group` |
 
 ```java
 @Data
@@ -423,7 +424,7 @@ public CopyCourseDataDTO copyBook(String bookId, String openId) {
 }
 ```
 
-Service 类**只保留三样东西**：`@Resource` 注入字段、public 业务入口、依赖注入字段的 private 编排方法。除此之外的内容（static 字段、工具方法、配置值）一律移出，规则见 6.1.1 ~ 6.1.3。
+Service 类**只保留三样东西**：`@Resource` 注入字段、public 业务入口、依赖注入字段的 private 编排方法。除此之外的内容（static 字段、工具方法、配置值、内部类）一律移出，规则见 6.1.1 ~ 6.1.4。
 
 以下规则适用于所有业务类：`Service`、`Controller`、`GrpcService`、`Listener`、`Template`。
 
@@ -535,6 +536,48 @@ public class BookService {
 #### 6.1.3 业务类中禁止散落配置项
 
 **配置项禁止散落在业务类中**（如 `@Value` 直接注入、硬编码可配置值），必须集中到 `@ConfigurationProperties` 配置类统一绑定管理，详见 11.2。
+
+#### 6.1.4 业务类中禁止定义内部类
+
+业务类中**不允许出现任何内部类、内部接口、内部枚举**，`private static class` 也不例外。常见动机与正确落点：
+
+| 内部类的用途 | 必须移到 |
+|---|---|
+| 多返回值、中间态载体（`CopyContext`、`ParseResult`） | 独立 DTO 类，置于项目的 `dto` 包 |
+| 分组常量 | `XxxConstants` 接口的嵌套接口（见 3.4） |
+| 状态、类型枚举 | 独立枚举类（见 3.5） |
+| 配置分组 | `@ConfigurationProperties` 配置类的内部类（见 11.2） |
+| 构建器 | 目标 DTO 上用 Lombok `@Builder` |
+
+```java
+// ✗ 错误：Service 里塞私有内部类承载中间态
+@Service
+public class BookService {
+
+    @Resource
+    private BookRepository bookRepository;
+
+    private static class CopyContext {
+        private String srcId;
+        private String destId;
+    }
+}
+
+// ✓ 正确：中间态提升为独立 DTO，Service 只留编排
+@Service
+public class BookService {
+
+    @Resource
+    private BookRepository bookRepository;
+
+    public void copy(String bookId) {
+        CopyContextDTO context = BookConverter.toCopyContext(bookRepository.findById(bookId));
+        this.doCopy(context);
+    }
+}
+```
+
+注意：内部类允许出现在 `Constants` 接口、配置类、DTO、枚举中（见 4.4），本条只约束业务类（`Service` / `Controller` / `GrpcService` / `Listener` / `Template`）。
 
 ### 6.2 gRPC 服务实现
 
@@ -753,6 +796,8 @@ Proto 和 DTO 的互转逻辑集中在 Converter/Convert 类中，避免在 Serv
 | 参数校验 | protoc-gen-validate | Proto 文件中声明校验规则 |
 | JWT | Nimbus JOSE JWT | Token 生成和验证 |
 
+
+
 ---
 
 ## 附录：编码风格速查表
@@ -764,7 +809,7 @@ Javadoc                  所有类（含内部类）和方法必写，@author + 
 日志                      @Slf4j + 占位符，业务中文/框架英文
 异常处理                  自定义 RuntimeException + 错误码枚举
 Service 设计              无接口，直接 @Service 类；只留注入字段 + public 入口 + 依赖注入的 private 编排
-业务类禁止项              static 字段、static 方法、不访问 this 字段的 private 方法、散落的配置项
+业务类禁止项              static 字段、static 方法、不访问 this 字段的 private 方法、散落的配置项、内部类
 返回值                    Early Return，Optional 链式
 集合                      Guava Lists/Maps，Stream API
 字符串格式化              String.format()

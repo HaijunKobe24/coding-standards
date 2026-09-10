@@ -2,6 +2,7 @@
 description: Java 编码规范 — 写任何 Java 代码时必须遵守
 alwaysApply: true
 enabled: true
+trigger: always_on
 inclusion: always
 ---
 
@@ -138,6 +139,7 @@ private OrderTemplate orderTemplate;
 1. **禁止任何 `static` 字段和 `static` 方法**，`private static final` 也不例外。常量 → `Constants` 接口，状态语义 → 枚举，`Pattern` 等重用实例 → `Utils`，`Cache` → 配置类 `@Bean` 后注入，可配置值 → `@ConfigurationProperties`。"只有本类用"和"已经不是魔法值"都不是保留理由。
 2. **禁止工具方法**。逐个检查 private 方法：不访问 `this` 字段的（即补上 `static` 也能编译通过），就是工具方法，必须移出——纯计算/判断 → `Utils`，对象转换 → `Converter`。
 3. **禁止散落配置项**（`@Value` 直接注入、硬编码可配置值），集中到 `@ConfigurationProperties` 配置类。
+4. **禁止定义内部类/接口/枚举**，`private static class` 也不例外。中间态载体 → 独立 DTO，分组常量 → `Constants` 嵌套接口，状态枚举 → 独立枚举类。（`Constants` / 配置类 / DTO / 枚举中允许内部类，本条只约束业务类）
 
 ```java
 // ✗ Service 里出现 static 字段、不访问 this 的方法
@@ -303,3 +305,4 @@ public enum ContentStatusEnum {
 - [ ] 业务类中搜 `static`，命中数为 0
 - [ ] 业务类每个 private 方法都访问了 `this` 字段，否则已移到 `Utils` / `Converter`
 - [ ] 配置项已集中到 `@ConfigurationProperties`，未散落在业务类中
+- [ ] 业务类中无内部类，中间态载体已提升为独立 DTO
