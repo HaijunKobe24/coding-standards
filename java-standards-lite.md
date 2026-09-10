@@ -264,7 +264,7 @@ public enum ContentStatusEnum {
 
 ## 15. Import 规则
 
-- 必须提前 `import`，不在逻辑代码中写类的完全限定路径
+- 必须提前 `import`，不写类的完全限定路径——**逻辑代码和 Javadoc（`@throws`/`@link`/`@see`）同等适用**
 - 删除未使用的 import
 
 ## 16. 工具库选型
