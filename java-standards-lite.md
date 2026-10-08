@@ -96,7 +96,7 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 private String refId;
 ```
 
-**`@Resource` 注入的字段不需要 Javadoc。**
+**`@Resource` 注入的字段禁止写 Javadoc**（字段名和类型已自解释）。
 
 ## 5. 注解顺序
 
@@ -120,7 +120,7 @@ public class Book {
 
 ## 6. 依赖注入
 
-**统一使用 `@Resource`，禁止使用 `@Autowired`。**
+**统一使用 `@Resource`，禁止使用 `@Autowired`；注入字段禁止写 Javadoc。**
 
 ```java
 @Resource
@@ -296,7 +296,7 @@ public enum ContentStatusEnum {
 
 写完 Java 代码后，必须逐条核对以下高频易错项，不符合的立即修正：
 
-- [ ] 依赖注入用 `@Resource`，不是 `@Autowired`
+- [ ] 依赖注入用 `@Resource`，不是 `@Autowired`；注入字段无 Javadoc
 - [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`），**内部类/接口/枚举也逐个核对**
 - [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`）
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）

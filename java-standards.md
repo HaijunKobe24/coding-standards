@@ -308,7 +308,7 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 private String refId;
 ```
 
-**`@Resource` 注入的字段不需要 Javadoc。**
+**`@Resource` 注入的字段禁止写 Javadoc**（字段名和类型已自解释）。
 
 ### 4.4 内部类 Javadoc
 
@@ -389,7 +389,7 @@ public class Book {
 
 ### 5.2 依赖注入
 
-**统一使用 `@Resource`**，不使用 `@Autowired`。注入字段之间有空行，`@Resource` 独占一行紧跟字段声明（见 2.3 示例）。
+**统一使用 `@Resource`**，不使用 `@Autowired`。注入字段之间有空行，`@Resource` 独占一行紧跟字段声明（见 2.3 示例）。注入字段禁止写 Javadoc（见 4.3）。
 
 ### 5.3 JPA 注解
 
