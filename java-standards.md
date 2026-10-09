@@ -278,7 +278,7 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException, IllegalA
 - 无返回值的 void 方法省略 `@return`
 - `@throws`：异常描述（若声明了异常）
 
-**例外：重写方法（含 `@Override` 注解）不需要 Javadoc**，因为继承自父类/接口方法，文档由父类提供。除非需要补充与父类不同的语义或注意事项，否则保持简洁，避免重复。
+**例外：重写方法（含 `@Override` 注解）禁止写 Javadoc**，文档由父类/接口提供。仅当需要补充与父类不同的语义或注意事项时才写。
 
 ```java
 // 重写方法无需 Javadoc

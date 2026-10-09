@@ -83,7 +83,7 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 - 范型参数 `@param <T>` 放在最后一个 `@param` 之后
 - `void` 方法省略 `@return`
 - 声明了异常时必须加 `@throws`
-- **重写方法（`@Override`）不需要 Javadoc**，除非有补充信息
+- **重写方法（`@Override`）禁止写 Javadoc**，仅当有补充信息时才写
 
 ### 字段级
 
@@ -298,7 +298,7 @@ public enum ContentStatusEnum {
 
 - [ ] 依赖注入用 `@Resource`，不是 `@Autowired`；注入字段无 Javadoc
 - [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`），**内部类/接口/枚举也逐个核对**
-- [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`）
+- [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`），`@Override` 方法除外
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
 - [ ] 无魔法值（字面量必须提取为常量或枚举）
 - [ ] 无多余 `@Column`、无多余 `else`
