@@ -16,9 +16,7 @@ inclusion: always
 
 Maven 多模块，包路径格式 `cn.unipus.{project}.{module}.{layer}`。新增文件的模块与包位置**沿用项目现有结构**，不自行新建目录层级。
 
-- 父 POM 用 `<dependencyManagement>` 统一版本
-- 子模块**不声明版本号**，全部继承父 POM
-- 新增依赖时必须先在父 POM 的 `<dependencyManagement>` 中声明版本
+- 父 POM 用 `<dependencyManagement>` 统一版本，子模块**不声明版本号**；新增依赖必须先在父 POM 声明版本
 
 ---
 
@@ -42,7 +40,7 @@ public void createUnit(CreateUnitRequestPO request,
 - 远程调用封装类后缀 `Template`（如 `OrderTemplate`），不用 `Client` 或 `FeignClient`
 - 对象转换类后缀 `Convert` / `Converter`，方法名用 `toDTO()` / `toProto()` 表示方向
 - 常量用 `interface` 定义，后缀 `Constants`（如 `BookConstants`）
-- 工具类后缀 `Utils`，方法全部 `static`
+- 工具类后缀 `Utils`，方法全部 `static`，不实例化
 - Service 层**不定义接口**，直接用 `@Service` 类
 - 获取数据用 `get` / `load`，校验用 `check` / `valid`
 - 变量简洁表意，集合用复数（`units`），Map 体现映射关系（`destIdBySrcId`）
@@ -157,15 +155,6 @@ if (BookUtils.isCustomBookId(bookId)) { ... }
 - **Optional 链式**：配合 `orElseThrow` / `orElse`
 
 ```java
-// ✓ Early Return
-public CopyCourseDataDTO copyBook(String bookId, String openId) {
-    if (BookUtils.isCustomBookId(bookId)) {
-        return copyCustomBook(bookId, openId);
-    }
-    return copyOfficialBook(bookId, openId);
-}
-
-// ✓ Optional 链式
 String nodeId = bookRepository.findById(bookId)
         .map(b -> iPublishNodeService.addBookNode(b.getId(), nodeName, b.getCreator()))
         .orElseThrow(() -> new ValidateException(PARAM_ERROR.getCode(), PARAM_ERROR.getMsg()));
@@ -193,14 +182,7 @@ log.info("xxx response：{}", response);
 
 ## 11. Lombok 使用
 
-| 注解 | 用途 |
-|------|------|
-| `@Data` | getter/setter/toString/equals/hashCode |
-| `@Slf4j` | Logger |
-| `@AllArgsConstructor` | 全参构造 |
-| `@NoArgsConstructor` | 无参构造 |
-| `@Getter` | 仅需 getter（如枚举） |
-| `@Data(staticConstructor = "of")` | 静态工厂方法 |
+`@Data`（getter/setter/toString/equals/hashCode）、`@Slf4j`、`@AllArgsConstructor`、`@NoArgsConstructor` 常规使用；仅需 getter 时（如枚举）用 `@Getter`；静态工厂用 `@Data(staticConstructor = "of")`。
 
 ## 12. 禁止魔法值
 
@@ -224,7 +206,6 @@ if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 ```java
 public interface CourseConstants {
 
-    String CREATED_TYPE = "customized";
     String QUERY_TYPE = "question-block";
 
     /**
@@ -271,23 +252,12 @@ public enum ContentStatusEnum {
 
 ## 16. 工具库选型
 
-| 场景 | 工具库 |
-|------|--------|
-| 集合创建 | Guava `Lists.newArrayList()`, `Maps.newLinkedHashMap()` |
-| 缓存 | Guava Cache |
-| JSON 解析 | Fastjson / Jackson / Hutool |
-| 字符串工具 | Apache Commons `StringUtils` |
-| HTTP 客户端 | Spring WebClient |
-| 对象映射 | MapStruct |
-| 代码生成 | Lombok |
+集合创建 Guava `Lists.newArrayList()` / `Maps.newLinkedHashMap()`；缓存 Guava Cache；JSON 解析 Fastjson / Jackson / Hutool；字符串工具 Apache Commons `StringUtils`；HTTP 客户端 Spring WebClient；对象映射 MapStruct；代码生成 Lombok。
 
 ## 17. 其他
 
 - JPA 实体字段依赖隐式列映射，不加多余的 `@Column`
 - 非 Controller 入参 DTO 不加多余的校验注解
-- 工具类方法全部 `static`，不实例化
-- 对象转换集中在 `Converter`/`Convert` 类中，不在 Service 层散落
-- 配置类用 `@ConfigurationProperties` 绑定，Lombok `@Data` 生成 getter/setter
 - 字符串格式化用 `String.format()`
 
 ---
