@@ -96,7 +96,7 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 private String refId;
 ```
 
-**`@Resource` 注入的字段禁止写 Javadoc**（字段名和类型已自解释）。
+**依赖注入的字段（`@Resource`、构造器注入）禁止写 Javadoc**（字段名和类型已自解释）。
 
 ## 5. 注解顺序
 
