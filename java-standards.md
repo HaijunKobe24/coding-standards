@@ -297,6 +297,8 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 }
 ```
 
+**例外：构造器禁止写 Javadoc**，名称和参数已自解释。
+
 ### 4.3 字段级 Javadoc
 
 实体类、DTO、枚举的每个字段都配注释：
