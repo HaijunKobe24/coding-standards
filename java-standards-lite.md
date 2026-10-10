@@ -82,7 +82,7 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 - `void` 方法省略 `@return`
 - 声明了异常时必须加 `@throws`
 - **重写方法（`@Override`）禁止写 Javadoc**，仅当有补充信息时才写
-- **构造器禁止写 Javadoc**
+- **构造器禁止写 Javadoc**，不论有无参数、是否含逻辑
 
 ### 字段级
 
@@ -185,6 +185,8 @@ log.info("xxx response：{}", response);
 
 `@Data`（getter/setter/toString/equals/hashCode）、`@Slf4j`、`@AllArgsConstructor`、`@NoArgsConstructor` 常规使用；仅需 getter 时（如枚举）用 `@Getter`；静态工厂用 `@Data(staticConstructor = "of")`。
 
+**构造器一律用 Lombok 生成**（`@RequiredArgsConstructor` / `@AllArgsConstructor` / `@NoArgsConstructor`），**禁止手写**；仅含逻辑的构造器（如调用 `super(...)`、参数校验）除外。
+
 ## 12. 禁止魔法值
 
 逻辑代码中**禁止直接使用字面量**，必须用常量或枚举：
@@ -271,6 +273,7 @@ public enum ContentStatusEnum {
 - [ ] 依赖注入用 `@Resource`，不是 `@Autowired`；注入字段无 Javadoc
 - [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`），**内部类/接口/枚举也逐个核对**
 - [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`），`@Override` 方法和构造器除外
+- [ ] 无手写的赋值型构造器（改用 Lombok），所有构造器无 Javadoc
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
 - [ ] 逻辑代码无魔法值（字面量必须提取为常量或枚举），注解属性除外
 - [ ] 无多余 `@Column`、无多余 `else`

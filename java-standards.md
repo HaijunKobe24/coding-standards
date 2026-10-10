@@ -297,7 +297,7 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 }
 ```
 
-**例外：构造器禁止写 Javadoc**，名称和参数已自解释。
+**例外：构造器禁止写 Javadoc**，不论有无参数、是否含逻辑。
 
 ### 4.3 字段级 Javadoc
 
@@ -713,6 +713,7 @@ public class HttpException extends RuntimeException {
 | `@Slf4j` | Logger 声明 |
 | `@AllArgsConstructor` | 全参构造函数 |
 | `@NoArgsConstructor` | 无参构造函数 |
+| `@RequiredArgsConstructor` | 必需参数（final 字段）构造函数 |
 | `@Getter` | 仅需 getter 的场景（如枚举） |
 | `@Data(staticConstructor = "of")` | 静态工厂方法 |
 
