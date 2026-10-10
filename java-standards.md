@@ -727,6 +727,7 @@ public class HttpException extends RuntimeException {
 - 不在逻辑代码中直接使用未经定义的字面量（魔法值）
 - 字符串、数字等常量必须在项目约定的常量包中定义为枚举类或常量接口
 - 若值具有状态语义，使用枚举类；若为简单配置值或标识，使用常量接口
+- **注解属性值直接写字面量，不提取常量**（如 `@ConditionalOnProperty(name = "xxx.enabled")`、`@Table(name = "tab_book")`）
 
 ```java
 // ✗ 错误：逻辑中直接写魔法值

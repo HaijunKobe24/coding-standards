@@ -199,6 +199,7 @@ if (Objects.equals(type, BookConstants.QUERY_TYPE)) { ... }
 
 - 有状态语义 → 枚举类
 - 简单配置值/标识 → 常量接口（`interface` 定义，可嵌套分组）
+- **注解属性值直接写字面量，不提取常量**（如 `@ConditionalOnProperty(name = "xxx.enabled")`、`@Table(name = "tab_book")`）
 
 ## 13. 常量定义
 
@@ -271,7 +272,7 @@ public enum ContentStatusEnum {
 - [ ] 类有 Javadoc（`@author haijun.gao` + `@date yyyy/M/d`），**内部类/接口/枚举也逐个核对**
 - [ ] 所有方法有 Javadoc（`@param` + `@return` + `@throws`），`@Override` 方法和构造器除外
 - [ ] 注解顺序正确（Swagger → Lombok → 自定义 → Spring → JPA → gRPC）
-- [ ] 无魔法值（字面量必须提取为常量或枚举）
+- [ ] 逻辑代码无魔法值（字面量必须提取为常量或枚举），注解属性除外
 - [ ] 无多余 `@Column`、无多余 `else`
 - [ ] 业务类中搜 `static`，命中数为 0
 - [ ] 业务类每个 private 方法都访问了 `this` 字段，否则已移到 `Utils` / `Converter`
