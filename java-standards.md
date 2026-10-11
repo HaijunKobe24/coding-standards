@@ -59,8 +59,8 @@ cn.unipus.xxx.api
 
 cn.unipus.xxx.base
 ├── common
-│   ├── constant/             # 常量和枚举
-│   └── utils/                # 工具类
+│   ├── constants/            # 常量和枚举
+│   └── utils/                # 工具类、Converter
 └── db
     ├── entity/               # JPA 实体
     └── repository/           # 数据访问层
@@ -297,7 +297,7 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 }
 ```
 
-**例外：构造器禁止写 Javadoc**，不论有无参数、是否含逻辑。
+**例外：构造器（含手写的 `super(...)` 构造器）禁止写 Javadoc**，不论有无参数、是否含逻辑。
 
 ### 4.3 字段级 Javadoc
 

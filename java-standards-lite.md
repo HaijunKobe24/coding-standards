@@ -14,7 +14,15 @@ inclusion: always
 
 ## 1. 项目结构
 
-Maven 多模块，包路径格式 `cn.unipus.{project}.{module}.{layer}`。新增文件的模块与包位置**沿用项目现有结构**，不自行新建目录层级。
+Maven 多模块，包路径格式 `cn.unipus.{project}.{module}.{layer}`。新增文件的模块与包位置**沿用项目现有结构**，不自行新建目录层级。项目无现成结构时按下表落位：
+
+| 类型 | 包 |
+|---|---|
+| `Utils` | `utils` |
+| `Converter` / `Convert` | `utils`（**不新建 `converter` 包**） |
+| `Constants` / 枚举 | `constants` |
+
+`service` 包只放 `@Service` 类，上述类型一律不放进去。
 
 - 父 POM 用 `<dependencyManagement>` 统一版本，子模块**不声明版本号**；新增依赖必须先在父 POM 声明版本
 
@@ -82,7 +90,16 @@ public <T> List<T> bookNodes(String bookId) throws ValidationException {
 - `void` 方法省略 `@return`
 - 声明了异常时必须加 `@throws`
 - **重写方法（`@Override`）禁止写 Javadoc**，仅当有补充信息时才写
-- **构造器禁止写 Javadoc**，不论有无参数、是否含逻辑
+- **构造器（含手写的 `super(...)` 构造器）禁止写 Javadoc**，不论有无参数、是否含逻辑
+
+```java
+// ✗ 手写 super(...) 构造器也不写 Javadoc
+/** 构造业务异常 */
+public BizException(int code, String message) { super(message); this.code = code; }
+
+// ✓
+public BizException(int code, String message) { super(message); this.code = code; }
+```
 
 ### 字段级
 
@@ -281,3 +298,4 @@ public enum ContentStatusEnum {
 - [ ] 业务类每个 private 方法都访问了 `this` 字段，否则已移到 `Utils` / `Converter`
 - [ ] 配置项已集中到 `@ConfigurationProperties`，未散落在业务类中
 - [ ] 业务类中无内部类，中间态载体已提升为独立 DTO
+- [ ] `Utils` / `Converter` / `Constants` / 枚举未放在 `service` 包，已放入 `utils` / `constants`（或项目现有风格）
